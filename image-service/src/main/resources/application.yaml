@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: image-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/image_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+aws:
+  s3:
+    endpoint-url: http://localhost:4566
+    region: us-east-1
+    bucket-name: images
+    access-key: test
+    secret-key: test
