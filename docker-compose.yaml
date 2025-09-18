@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: image_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  localstack:
+    image: localstack/localstack:latest
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
+      - AWS_EXECUTION_ENV=True
+      - DEBUG=1
+    ports:
+      - "4566:4566"
+    volumes:
+      - "./init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh"
+      - localstack_data:/var/lib/localstack
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json
+      - ./pgadmin/pgpass:/pgadmin4/pgpass
+    entrypoint: >
+      sh -c "
+      cp -f /pgadmin4/pgpass /var/lib/pgadmin;
+      chmod 600 /var/lib/pgadmin/pgpass;
+      /entrypoint.sh
+      "
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+  image-service:
+    build:
+      context: ./
+      dockerfile: Dockerfile.image-service
+    depends_on:
+      - postgres
+      - localstack
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/image_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - AWS_S3_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - S3_BUCKET=images
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
+  localstack_data:
