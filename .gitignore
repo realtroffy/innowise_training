@@ -35,6 +35,6 @@ build/
 /logs/nginx/error.log
 /logs/app-dev/myAppError.log
 /myAppError.log
-/image-service/.mvn/wrapper/maven-wrapper.properties
-/image-service/mvnw
-/image-service/mvnw.cmd
+**/.mvn/wrapper/maven-wrapper.properties
+**/mvnw
+**/mvnw.cmd
