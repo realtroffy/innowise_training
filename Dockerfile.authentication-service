@@ -1,0 +1,27 @@
+FROM maven:3.9.9-eclipse-temurin-21 AS dependencies
+WORKDIR /opt/app
+
+COPY pom.xml .
+
+COPY image-service/pom.xml image-service/pom.xml
+COPY authentication-service/pom.xml authentication-service/pom.xml
+COPY api-gateway/pom.xml api-gateway/pom.xml
+
+RUN mvn -B -e org.apache.maven.plugins:maven-dependency-plugin:3.6.1:go-offline -f /opt/app/pom.xml -DexcludeArtifactIds=authentication-service
+
+RUN mvn install -f /opt/app/pom.xml -N -DskipTests
+
+FROM maven:3.9.9-eclipse-temurin-21 AS builder
+WORKDIR /opt/app
+
+COPY --from=dependencies /root/.m2 /root/.m2
+COPY --from=dependencies /opt/app /opt/app
+
+COPY authentication-service/src authentication-service/src
+RUN mvn clean package -f /opt/app/authentication-service/pom.xml -DskipTests
+
+FROM eclipse-temurin:21-jre
+WORKDIR /application
+COPY --from=builder /opt/app/authentication-service/target/authentication-service-0.0.1-SNAPSHOT.jar /application/app.jar
+
+ENTRYPOINT ["java", "-jar", "/application/app.jar"]
